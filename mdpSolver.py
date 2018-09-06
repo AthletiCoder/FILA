@@ -1,3 +1,5 @@
+from pulp import *
+
 def read_mdp(file_name):
 	f = open(file_name, "r")
 	d = {"numStates":0,
@@ -5,7 +7,7 @@ def read_mdp(file_name):
 		 "discountFactor":None,
 		 "rewards":None,
 		 "transitions":None,
-		 "type":'sad'}
+		 "type":None}
 	i = 0
 	stateCount = 0
 	actCount = 0	
@@ -44,7 +46,42 @@ def read_mdp(file_name):
 			
 
 def lp_solver(file_name):
-	return None
+	dB = read_mdp(file_name)
+	prob = LpProblem("MDP Solver", LpMinimize)
+	V = [LpVariable("v"+str(i),0) for i in range(dB["numStates"])]
+	for s in range(dB['numStates']):
+		prob += sum(x for x in V), "Objective function"
+	for s in range(dB['numStates']):
+		for a in range(dB['numActions']):
+			lhs = ""
+			for sPrime in range(dB['numStates']):
+				lhs += dB['transitions'][s][a][sPrime]*dB['rewards'][s][a][sPrime]+dB['transitions'][s][a][sPrime]*dB['discountFactor']*V[sPrime]
+			prob += lhs <= V[s], "V-"+str(s)+","+str(a)
+	prob.solve()
+	valueFunction = []
+	for var in prob.variables():
+		valueFunction.append(value(var))
+	policy = optimal_policy(valueFunction, dB)
+	for i in range(len(valueFunction)):
+		print(valueFunction[i], policy[i])
+
+def optimal_policy(valueFunction, dB):
+	policy = []
+	for s in range(dB['numStates']):
+		maxSoFar = -99999999
+		bestAction = None
+		for a in range(dB['numActions']):
+			Sum = 0
+			for sPrime in range(dB['numStates']):
+				Sum += dB['transitions'][s][a][sPrime]*(dB['rewards'][s][a][sPrime]+dB['discountFactor']*valueFunction[sPrime])
+			if Sum > maxSoFar:
+				maxSoFar = Sum
+				bestAction = a
+		policy.append(bestAction)
+	return policy
 
 def policy_iteration(file_name):
 	return None
+
+
+lp_solver(file_name = "/media/varunkumar/Entertainment/Courses/Sem7/CS747/assignments/assignment2/data/continuing/MDP10.txt")
