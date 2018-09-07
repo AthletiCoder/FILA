@@ -86,9 +86,7 @@ def optimal_policy(valueFunction, dB):
 		policy.append(bestAction)
 	return policy
 
-def Q_evaluation(policy, file_name):
-	dB = read_mdp(file_name)
-	Q = [[None for a in range(dB['numActions'])] for s in range(dB['numStates'])]
+def v_pi(policy, dB):
 	prob = LpProblem("MDP Solver", LpMinimize)
 	# initialising Lp variables which represent the value function of all states
 	V = [LpVariable("v"+str(i),None) for i in range(dB["numStates"])]	 
@@ -104,6 +102,12 @@ def Q_evaluation(policy, file_name):
 	valueFunction = []
 	for var in prob.variables():
 		valueFunction.append(value(var))
+	return valueFunction
+
+
+def Q_evaluation(policy, file_name):
+	dB = read_mdp(file_name)
+	valueFunction = v_pi(policy,dB)
 	Q = [[None for i in range(dB['numActions'])] for j in range(dB['numStates'])]
 	for s in range(dB['numStates']):
 		for a in range(dB['numActions']):
@@ -130,11 +134,49 @@ def policy_iteration(file_name):
 					converged = False
 					policy[s] = a
 					break
-	print(policy)
-	return policy
+	valueFunction = v_pi(policy, dB)
+	for i in range(dB['numStates']):
+		print(valueFunction[i], policy[i])
 
+def generate_gambler_mdp(ph):
+	# numStates = 101 # [0,100]
+	S = 101
+	print(S)
+	# numActions = 100 # [0,99]
+	A = 100
+	print(A)
+	# initializing transition and reward arrays
+	T = [[[0 for i in range(S)] for j in range(A)] for k in range(S)]
+	R = [[[0 for i in range(S)] for j in range(A)] for k in range(S)]
+	# transitions
+	for s in range(S-1):
+		for a in range(A):
+			if s+a<=100 and s-a>=0:
+				T[s][a][s-a] = 1/2
+				T[s][a][s+a] = 1/2
+			if s-a == 0:
+				R[s][a][s-a] = -1
+			if s+a == 100:
+				R[s][a][s+a] = 1
+	
+	for s in range(S):
+		for a in range(A):
+			for sPrime in range(S):
+				print(str(R[s][a][sPrime]) + "\t")
+		print("\n")
 
-if sys.argv[2] == "lp":
+	for s in range(S):
+		for a in range(A):
+			for sPrime in range(S):
+				print(str(T[s][a][sPrime]) + "\t")
+		print("\n")
+	print(1)
+	print("episodic")
+			
+
+if len(sys.argv) == 2:
+	generate_gambler_mdp(sys.argv[1])
+elif sys.argv[2] == "lp":
 	lp_solver(sys.argv[1])
 elif sys.argv[2] == "hpi":
 	policy_iteration(sys.argv[1])

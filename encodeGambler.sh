@@ -2,4 +2,4 @@
 
 ph="$1"
 
-echo $(python3 "${ph}")
+echo $(python3 extras/mdpSolver.py "${ph}")

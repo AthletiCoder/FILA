@@ -22,4 +22,4 @@ case $key in
 esac
 done
 
-echo $(python3 mdpSolver.py "${MDP_FILE_PATH}" "${ALGORITHM}")
+echo $(python3 extras/mdpSolver.py "${MDP_FILE_PATH}" "${ALGORITHM}")
